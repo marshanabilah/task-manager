@@ -54,14 +54,14 @@
 **Description:** Add the schema and service operations that persist tasks, soft-delete tasks, and transactionally record every task update without exposing audit mutation operations.
 
 **Acceptance criteria:**
-- [ ] Tasks persist title, description, status, timestamps, and soft-deletion state.
-- [ ] Updates insert one audit record containing actor, field changes, and timestamp in the same transaction.
-- [ ] History returns oldest-first and survives task deletion; no service method edits or deletes audit entries.
+- [x] Tasks persist title, description, status, timestamps, and soft-deletion state.
+- [x] Updates insert one audit record containing actor, field changes, and timestamp in the same transaction.
+- [x] History returns oldest-first and survives task deletion; no service method edits or deletes audit entries.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- server/src/services`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: inspect a local database after an update and deletion.
+- [x] Tests pass: `npm run test -- server/src/services/taskService.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: in-memory database assertions verified updates and retained deleted-task history.
 
 **Dependencies:** Task 2
 
@@ -76,9 +76,9 @@
 
 ## Checkpoint: After Tasks 1-3
 
-- [ ] All focused tests pass.
-- [ ] `npm run build` succeeds.
-- [ ] Review the schema, transaction, and immutable-audit guarantees.
+- [x] All focused tests pass.
+- [x] `npm run build` succeeds.
+- [x] Review the schema, transaction, and immutable-audit guarantees.
 
 ## Task 4: Add validated Express task and history endpoints
 
