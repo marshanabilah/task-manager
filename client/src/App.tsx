@@ -14,7 +14,11 @@ const nextStatus: Record<TaskStatus, TaskStatus | null> = {
 
 function auditMessage(entry: AuditEntry) {
   return entry.changes
-    .map((change) => change.field === 'deleted' ? 'task was deleted' : `${change.field} changed from “${change.before ?? 'empty'}” to “${change.after ?? 'empty'}”`)
+    .map((change) => {
+      if (change.field === 'created') return 'task was created';
+      if (change.field === 'deleted') return 'task was deleted';
+      return `${change.field} changed from “${change.before ?? 'empty'}” to “${change.after ?? 'empty'}”`;
+    })
     .join('; ');
 }
 
@@ -23,7 +27,8 @@ export function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailMode, setDetailMode] = useState<'edit' | null>(null);
-  const [view, setView] = useState<'tasks' | 'create' | 'history'>('tasks');
+  const [view, setView] = useState<'tasks' | 'history'>('tasks');
+  const [showCreate, setShowCreate] = useState(false);
   const [history, setHistory] = useState<AuditEntry[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -49,9 +54,10 @@ export function App() {
   async function createTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      await taskApi.create({ title, description });
+      await taskApi.create({ title, description }, actor);
       setTitle('');
       setDescription('');
+      setShowCreate(false);
       await refresh();
       setView('tasks');
     } catch (caught) {
@@ -79,6 +85,7 @@ export function App() {
 
   async function showAllHistory() {
     closeDetail();
+    setShowCreate(false);
     setLoading(true);
     try {
       setHistory(await taskApi.allHistory());
@@ -97,8 +104,9 @@ export function App() {
     setDetailMode('edit');
   }
 
-  function changeView(nextView: 'tasks' | 'create') {
+  function changeView(nextView: 'tasks') {
     closeDetail();
+    setShowCreate(false);
     setView(nextView);
   }
 
@@ -136,26 +144,28 @@ export function App() {
 
       <nav className="view-tabs" aria-label="Task manager views">
         <button type="button" className={view === 'tasks' ? 'tab-active' : 'quiet-button'} onClick={() => changeView('tasks')}>Active tasks</button>
-        <button type="button" className={view === 'create' ? 'tab-active' : 'quiet-button'} onClick={() => changeView('create')}>New task</button>
         <button type="button" className={view === 'history' ? 'tab-active' : 'quiet-button'} onClick={() => void showAllHistory()}>History</button>
       </nav>
 
-      {view === 'create' && <section className="create-panel" aria-labelledby="create-heading">
-        <h2 id="create-heading">New task</h2>
-        <form onSubmit={createTask} className="task-form">
-          <label>Title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label>
-          <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
-          <button type="submit">Add task</button>
-        </form>
-      </section>}
-
       {view === 'tasks' && <>
       {error && <p role="alert" className="error">{error}</p>}
-      {loading ? <p role="status">Loading tasks…</p> : tasks.length === 0 ? (
-        <p className="empty">No active tasks yet. Add one above to begin.</p>
-      ) : (
         <section aria-labelledby="tasks-heading">
-          <h2 id="tasks-heading">Active tasks</h2>
+          <div className="section-heading">
+            <h2 id="tasks-heading">Active tasks</h2>
+            <button type="button" className="quiet-button" onClick={() => { closeDetail(); setShowCreate((visible) => !visible); }}>
+              {showCreate ? 'Cancel new task' : '+ New task'}
+            </button>
+          </div>
+          {showCreate && <div className="create-panel">
+            <form onSubmit={createTask} className="task-form">
+              <label>Title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label>
+              <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
+              <button type="submit">Add task</button>
+            </form>
+          </div>}
+          {loading ? <p role="status">Loading tasks…</p> : tasks.length === 0 ? (
+            <p className="empty">No active tasks yet. Use + New task to begin.</p>
+          ) : (
           <ul className="task-list">
             {tasks.map((task) => (
               <li key={task.id}>
@@ -167,8 +177,9 @@ export function App() {
               </li>
             ))}
           </ul>
+          )}
         </section>
-      )}</>}
+      </>}
 
       {view === 'history' && <section className="history-page" aria-labelledby="history-heading">
         <h2 id="history-heading">All history</h2>

@@ -1,7 +1,7 @@
 import type { Actor, TaskStatus } from './task';
 
 export type AuditChange = {
-  field: 'title' | 'description' | 'status' | 'deleted';
+  field: 'title' | 'description' | 'status' | 'created' | 'deleted';
   before: string | null;
   after: string | null;
 };

@@ -17,8 +17,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const taskApi = {
   list: () => request<Task[]>('/api/tasks'),
-  create: (input: { title: string; description?: string }) =>
-    request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify(input) }),
+  create: (input: { title: string; description?: string }, actor: Actor) =>
+    request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify({ actor, ...input }) }),
   update: (id: string, actor: Actor, input: TaskUpdate) =>
     request<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ actor, ...input }) }),
   remove: (id: string, actor: Actor) => request<void>(`/api/tasks/${id}`, { method: 'DELETE', body: JSON.stringify({ actor }) }),

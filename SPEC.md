@@ -9,7 +9,7 @@ The primary user is a small team sharing one task list. Success means a user can
 ### User stories
 
 - As a user, I can select one of the predefined users before managing tasks so audit records identify the actor.
-- As a user, I can create a task with a title and optional description.
+- As a user, I can add a task with a title and optional description from the active-task view.
 - As a user, I can view all active tasks.
 - As a user, I can update a task's title, description, or status and see a clear record of what changed.
 - As a user, I can delete a task and retain its historical record.
@@ -67,18 +67,18 @@ tests/                  API and UI-focused tests
 
 - The v1 actor is selected through a dropdown of predefined users: `john.doe`, `jane.smith`, and `alex.lee`. The selected user persists locally in the browser for later actions.
 - No sign-in, user creation, role management, or editable display name is included.
-- Every task update appends an immutable audit record containing: id, task id, task title at the time of change, actor, timestamp, and the fields that changed with their previous and new values.
+- Every task creation, update, and deletion appends an immutable audit record containing: id, task id, task title at the time of change, actor, timestamp, and the fields that changed with their previous and new values.
 - For a status update, the record specifically includes the prior and new status. For example: `User "john.doe" changed Task "Prepare Invoice" status from "pending" to "in_progress" at 2025-01-01 10:00`.
 - For title or description changes, the record uses the same readable before/after format. For example: `User "jane.smith" changed Task title from "Prepare Invoice" to "Send Invoice" at 2025-01-01 10:00`.
-- The server creates the audit record in the same database operation as the task update. An update must not succeed without its audit record.
+- The server creates the audit record in the same database operation as the task mutation. A creation, update, or deletion must not succeed without its audit record.
 - Audit records cannot be edited or deleted through the API or UI. Updating or deleting a task must never remove its earlier audit records.
-- A task details/history view presents records chronologically (oldest first) with a plain-language summary and local date/time. For example: `User "john.doe" changed Task "Prepare Invoice" status from "pending" to "in_progress" at 2025-01-01 10:00`.
+- A dedicated history view presents records newest first with a plain-language summary and local date/time, including records for deleted tasks. For example: `User "john.doe" changed Task "Prepare Invoice" status from "pending" to "in_progress" at 2025-01-01 10:00`.
 - A deleted task's history remains retrievable by its id even though it is absent from the active list.
 
 ### API
 
 - `GET /api/tasks` lists active tasks.
-- `POST /api/tasks` creates a task and audit entry.
+- `POST /api/tasks` creates a task and audit entry. It requires the selected actor.
 - `PATCH /api/tasks/:id` updates a task. Every successful update creates its immutable audit entry.
 - `DELETE /api/tasks/:id` soft-deletes a task and audit entry.
 - `GET /api/tasks/:id/history` returns the task's audit entries.
@@ -105,14 +105,14 @@ function describeStatusChange(
 ## Testing Strategy
 
 - Unit-test validation and audit-summary generation in `server/src/**/*.test.ts`.
-- Integration-test title, description, and status updates, including their audit records and chronological history response.
+- Integration-test task creation, title, description, and status updates, including their audit records and newest-first history response.
 - Component-test forms, the active task list, and readable history states.
 - Include tests proving deleted tasks are excluded from the list but retain history, and that audit entries cannot be changed or deleted.
 - Cover the key task and audit flows; exact coverage thresholds will be set with the initial test tooling.
 
 ## Boundaries
 
-- Always: validate all API input, generate audit entries for every task update on the server, use accessible form controls, run lint/build/tests before completion, and keep the interface focused on task management and history.
+- Always: validate all API input, generate audit entries for every task creation, update, and deletion on the server, use accessible form controls, run lint/build/tests before completion, and keep the interface focused on task management and history.
 - Ask first: add authentication or authorization, add third-party services, change the approved SQLite database/schema, add dependencies beyond the selected stack, or add features such as task assignment, due dates, notifications, filtering, or collaboration presence.
 - Never: store credentials or secrets in the repository, allow the client to write or modify audit entries directly, permanently erase audit records through normal task deletion, or remove failing tests merely to make a build pass.
 

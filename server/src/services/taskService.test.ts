@@ -4,7 +4,7 @@ import { createTaskService } from './taskService';
 describe('task service', () => {
   it('writes a readable audit entry for every changed field', () => {
     const service = createTaskService(':memory:');
-    const task = service.create({ title: 'Prepare Invoice', description: 'Draft it' });
+    const task = service.create({ title: 'Prepare Invoice', description: 'Draft it' }, 'john.doe');
 
     service.update(task.id, 'john.doe', {
       title: 'Send Invoice',
@@ -22,17 +22,26 @@ describe('task service', () => {
           { field: 'status', before: 'to_do', after: 'pending' },
         ],
       },
+      {
+        actor: 'john.doe',
+        taskTitle: 'Prepare Invoice',
+        changes: [{ field: 'created', before: null, after: 'created' }],
+      },
     ]);
   });
 
   it('retains audit history after a task is deleted', () => {
     const service = createTaskService(':memory:');
-    const task = service.create({ title: 'Prepare Invoice' });
+    const task = service.create({ title: 'Prepare Invoice' }, 'john.doe');
 
     service.update(task.id, 'jane.smith', { status: 'pending' });
     service.remove(task.id, 'jane.smith');
 
     expect(service.list()).toEqual([]);
-    expect(service.history(task.id)).toHaveLength(1);
+    expect(service.history(task.id)).toMatchObject([
+      { actor: 'jane.smith', changes: [{ field: 'deleted', before: null, after: 'deleted' }] },
+      { actor: 'jane.smith', changes: [{ field: 'status', before: 'to_do', after: 'pending' }] },
+      { actor: 'john.doe', changes: [{ field: 'created', before: null, after: 'created' }] },
+    ]);
   });
 });

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
@@ -11,6 +11,7 @@ describe('App', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
     fetchMock.mockReset();
   });
@@ -44,5 +45,14 @@ describe('App', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Edit task')).toBeInTheDocument();
+  });
+
+  it('shows the new-task form from the active task view', async () => {
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '+ New task' }));
+
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New task' })).not.toBeInTheDocument();
   });
 });

@@ -82,7 +82,7 @@ export function createTaskService(databasePath = 'task-manager.sqlite') {
     return asTask(row);
   }
 
-  function create(input: { title: string; description?: string | null }): Task {
+  const create = database.transaction((input: { title: string; description?: string | null }, actor: Actor): Task => {
     const title = input.title.trim();
     if (!title) {
       throw new Error('Title is required');
@@ -104,9 +104,14 @@ export function createTaskService(databasePath = 'task-manager.sqlite') {
         'INSERT INTO tasks (id, title, description, status, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       )
       .run(task.id, task.title, task.description, task.status, now, now, null);
+    database
+      .prepare(
+        'INSERT INTO audit_entries (id, task_id, task_title, actor, changes, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .run(randomUUID(), task.id, task.title, actor, JSON.stringify([{ field: 'created', before: null, after: 'created' }]), now);
 
     return task;
-  }
+  });
 
   const update = database.transaction((id: string, actor: Actor, input: TaskUpdate) => {
     const before = getTask(id);
@@ -166,12 +171,12 @@ export function createTaskService(databasePath = 'task-manager.sqlite') {
     history(id: string): AuditEntry[] {
       getTask(id);
       return (database
-        .prepare('SELECT * FROM audit_entries WHERE task_id = ? ORDER BY created_at ASC, rowid ASC')
+        .prepare('SELECT * FROM audit_entries WHERE task_id = ? ORDER BY created_at DESC, rowid DESC')
         .all(id) as AuditRow[]).map(asAuditEntry);
     },
     allHistory(): AuditEntry[] {
       return (database
-        .prepare('SELECT * FROM audit_entries ORDER BY created_at ASC, rowid ASC')
+        .prepare('SELECT * FROM audit_entries ORDER BY created_at DESC, rowid DESC')
         .all() as AuditRow[]).map(asAuditEntry);
     },
   };
