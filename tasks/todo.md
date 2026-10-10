@@ -5,14 +5,14 @@
 **Description:** Create the minimal root, client, and server build/test setup needed to run a React frontend and Express API during development.
 
 **Acceptance criteria:**
-- [ ] Root scripts run development, build, test, and lint commands.
-- [ ] Client and server TypeScript compilation succeeds in strict mode.
-- [ ] The development command starts both applications with a documented local API connection.
+- [x] Root scripts run development, build, test, and lint commands.
+- [x] Client and server TypeScript compilation succeeds in strict mode.
+- [x] The development command starts both applications with a documented local API connection.
 
 **Verification:**
-- [ ] Tests pass: `npm run test`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: `npm run dev` serves the client and API.
+- [x] Tests pass: `npm run test`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: `npm run dev` started Vite at `127.0.0.1:5173` and the API at `127.0.0.1:3001`.
 
 **Dependencies:** None
 
@@ -30,14 +30,14 @@
 **Description:** Establish the strongly typed domain model and input validation rules before persistence or UI work begins.
 
 **Acceptance criteria:**
-- [ ] Shared types represent tasks, immutable audit entries, allowed actors, and the four status values.
-- [ ] Validation rejects blank titles, unknown actors, invalid statuses, and skipped/backward status transitions.
-- [ ] Unit tests cover valid and invalid transitions.
+- [x] Shared types represent tasks, immutable audit entries, allowed actors, and the four status values.
+- [x] Validation rejects blank titles, unknown actors, invalid statuses, and skipped/backward status transitions.
+- [x] Unit tests cover valid and invalid transitions.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- --runInBand`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: inspect exported contracts for the expected allowed values.
+- [x] Tests pass: `npm run test -- server/src/validation.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: verified the exported actor list and four ordered status values.
 
 **Dependencies:** Task 1
 
