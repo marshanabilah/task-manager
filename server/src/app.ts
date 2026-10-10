@@ -21,7 +21,7 @@ export function createApp(databasePath?: string) {
   });
 
   app.post('/api/tasks', (request, response) => {
-    const body = request.body as { title?: unknown; description?: unknown };
+    const body = request.body as { title?: unknown; description?: unknown; actor?: unknown };
     if (typeof body.title !== 'string' || !body.title.trim()) {
       response.status(400).json({ error: 'Title is required' });
       return;
@@ -31,7 +31,11 @@ export function createApp(databasePath?: string) {
       return;
     }
 
-    response.status(201).json(tasks.create({ title: body.title, description: body.description }));
+    try {
+      response.status(201).json(tasks.create({ title: body.title, description: body.description }, validateActor(body.actor)));
+    } catch (error) {
+      response.status(400).json({ error: error instanceof Error ? error.message : 'Task creation failed' });
+    }
   });
 
   app.patch('/api/tasks/:id', (request, response) => {

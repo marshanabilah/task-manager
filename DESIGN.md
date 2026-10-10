@@ -5,6 +5,6 @@ The task manager is a quiet operational tool for a small team, not a marketing p
 - Energy/Rhythm/Motion: 1 / 1 / 1, calm and predictable; the edit/history dialog uses one short transition only to signal a change of context.
 - Typography: a system sans-serif keeps dense task and audit information easy to scan.
 - Palette: black, white, and neutral grays keep attention on task content; muted red is reserved for errors and deletion.
-- Layout: a single column preserves a clear reading order from actor selection to tasks and history.
+- Layout: a single column preserves a clear reading order from actor selection to active tasks and history; new-task entry expands in the active-task view rather than becoming a separate destination.
 - Spacing: compact, consistent gaps reduce scrolling without making controls crowded.
 - Accent: the dark primary button marks available actions; no decorative visual assets or gradients are used.

@@ -1,6 +1,6 @@
 # Task Manager
 
-A small React and Express task manager with a local SQLite database and an immutable task-update history.
+A small React and Express task manager with a local SQLite database and an immutable creation, update, and deletion history.
 
 ## Run it
 
