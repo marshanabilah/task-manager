@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import type { AuditEntry } from '../../shared/audit';
 import { ACTORS, TASK_STATUSES, type Task, type TaskStatus } from '../../shared/task';
 import { taskApi } from './api/tasks';
@@ -20,6 +20,27 @@ function auditMessage(entry: AuditEntry) {
       return `${change.field} changed from “${change.before ?? 'empty'}” to “${change.after ?? 'empty'}”`;
     })
     .join('; ');
+}
+
+function Modal({ children, labelledBy, onClose }: { children: ReactNode; labelledBy: string; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+
+    return () => {
+      if (dialog.open && typeof dialog.close === 'function') dialog.close();
+    };
+  }, []);
+
+  return <dialog ref={dialogRef} className="task-dialog" aria-labelledby={labelledBy} onCancel={(event) => { event.preventDefault(); onClose(); }}>{children}</dialog>;
 }
 
 export function App() {
@@ -153,18 +174,11 @@ export function App() {
           <div className="section-heading">
             <h2 id="tasks-heading">Active tasks</h2>
             <button type="button" className="quiet-button" onClick={() => { closeDetail(); setShowCreate((visible) => !visible); }}>
-              {showCreate ? 'Cancel new task' : '+ New task'}
+              New
             </button>
           </div>
-          {showCreate && <div className="create-panel">
-            <form onSubmit={createTask} className="task-form">
-              <label>Title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label>
-              <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
-              <button type="submit">Add task</button>
-            </form>
-          </div>}
           {loading ? <p role="status">Loading tasks…</p> : tasks.length === 0 ? (
-            <p className="empty">No active tasks yet. Use + New task to begin.</p>
+            <p className="empty">No active tasks yet.</p>
           ) : (
           <ul className="task-list">
             {tasks.map((task) => (
@@ -187,11 +201,25 @@ export function App() {
         {loading ? <p role="status">Loading history…</p> : history.length === 0 ? <p className="empty">No task updates have been recorded yet.</p> : <ol className="history-list">{history.map((entry) => <li key={entry.id}><strong>{entry.actor}</strong> changed <strong>{entry.taskTitle}</strong>: {auditMessage(entry)} <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time></li>)}</ol>}
       </section>}
 
+      {showCreate && (
+        <Modal labelledBy="create-heading" onClose={() => setShowCreate(false)}>
+          <div className="dialog-heading">
+            <h2 id="create-heading">New task</h2>
+            <button type="button" className="quiet-button" onClick={() => setShowCreate(false)}>Cancel</button>
+          </div>
+          <form onSubmit={createTask} className="task-form">
+            <label>Title<input autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} /></label>
+            <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
+            <div className="task-actions"><button type="submit">New</button><button type="button" className="quiet-button" onClick={() => setShowCreate(false)}>Cancel</button></div>
+          </form>
+        </Modal>
+      )}
+
       {selectedTask && detailMode && (
-        <dialog className="task-dialog" open aria-labelledby="detail-heading" onCancel={(event) => { event.preventDefault(); closeDetail(); }}>
+        <Modal labelledBy="detail-heading" onClose={closeDetail}>
           <div className="dialog-heading">
             <div><p className="eyebrow">Edit task</p><h2 id="detail-heading">{selectedTask.title}</h2></div>
-            <button type="button" className="quiet-button" onClick={closeDetail}>Close</button>
+            <button type="button" className="quiet-button" onClick={closeDetail}>Cancel</button>
           </div>
           <form onSubmit={saveTask} className="task-form">
             <label>Title<input name="title" defaultValue={selectedTask.title} required /></label>
@@ -205,7 +233,7 @@ export function App() {
             </label>
             <div className="task-actions"><button type="submit">Save changes</button><button type="button" className="quiet-button" onClick={closeDetail}>Cancel</button></div>
           </form>
-        </dialog>
+        </Modal>
       )}
     </main>
   );

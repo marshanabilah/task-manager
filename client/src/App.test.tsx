@@ -43,16 +43,17 @@ describe('App', () => {
     const editButton = await screen.findByRole('button', { name: 'Edit' });
     fireEvent.click(editButton);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveAttribute('open');
     expect(screen.getByText('Edit task')).toBeInTheDocument();
   });
 
   it('shows the new-task form from the active task view', async () => {
     render(<App />);
 
-    fireEvent.click(await screen.findByRole('button', { name: '+ New task' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'New' }));
 
-    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New task' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveAttribute('open');
+    expect(screen.getAllByRole('button', { name: 'New' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Cancel' })).toHaveLength(2);
   });
 });
