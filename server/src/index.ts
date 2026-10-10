@@ -1,6 +1,6 @@
-import express from 'express';
+import { createApp } from './app';
 
-const app = express();
+const app = createApp();
 const port = 3001;
 
 app.get('/api/health', (_request, response) => {

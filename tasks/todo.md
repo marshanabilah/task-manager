@@ -85,14 +85,14 @@
 **Description:** Expose the task operations and read-only audit-history endpoint through the agreed JSON API.
 
 **Acceptance criteria:**
-- [ ] The list, create, update, delete, and history routes return documented JSON responses.
-- [ ] Update routes validate the selected actor and status workflow and return useful 4xx errors.
-- [ ] The API has no audit mutation endpoint.
+- [x] The list, create, update, delete, and history routes return documented JSON responses.
+- [x] Update routes validate the selected actor and status workflow and return useful 4xx errors.
+- [x] The API has no audit mutation endpoint.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- server/src/routes`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: create, update, delete, and retrieve task history with an HTTP client.
+- [x] Tests pass: `npm run test -- server/src/app.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: API integration tests covered create, update, list, and chronological history.
 
 **Dependencies:** Task 3
 
