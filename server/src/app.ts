@@ -16,6 +16,10 @@ export function createApp(databasePath?: string) {
     response.json(tasks.list());
   });
 
+  app.get('/api/history', (_request, response) => {
+    response.json(tasks.allHistory());
+  });
+
   app.post('/api/tasks', (request, response) => {
     const body = request.body as { title?: unknown; description?: unknown };
     if (typeof body.title !== 'string' || !body.title.trim()) {
@@ -45,10 +49,13 @@ export function createApp(databasePath?: string) {
 
   app.delete('/api/tasks/:id', (request, response) => {
     try {
-      tasks.remove(request.params.id);
+      const body = request.body as { actor?: unknown };
+      tasks.remove(request.params.id, validateActor(body.actor));
       response.status(204).send();
-    } catch {
-      response.status(404).json({ error: 'Task not found' });
+    } catch (error) {
+      response.status(error instanceof Error && error.message === 'Task not found' ? 404 : 400).json({
+        error: error instanceof Error ? error.message : 'Task deletion failed',
+      });
     }
   });
 

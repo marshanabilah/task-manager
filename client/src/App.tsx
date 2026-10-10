@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import type { AuditEntry } from '../../shared/audit';
-import { ACTORS, type Task, type TaskStatus } from '../../shared/task';
+import { ACTORS, TASK_STATUSES, type Task, type TaskStatus } from '../../shared/task';
 import { taskApi } from './api/tasks';
 import { useSelectedActor } from './hooks/useSelectedActor';
 import './styles.css';
@@ -14,7 +14,7 @@ const nextStatus: Record<TaskStatus, TaskStatus | null> = {
 
 function auditMessage(entry: AuditEntry) {
   return entry.changes
-    .map((change) => `${change.field} changed from “${change.before ?? 'empty'}” to “${change.after ?? 'empty'}”`)
+    .map((change) => change.field === 'deleted' ? 'task was deleted' : `${change.field} changed from “${change.before ?? 'empty'}” to “${change.after ?? 'empty'}”`)
     .join('; ');
 }
 
@@ -22,6 +22,8 @@ export function App() {
   const [actor, setActor] = useSelectedActor();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [detailMode, setDetailMode] = useState<'edit' | null>(null);
+  const [view, setView] = useState<'tasks' | 'create' | 'history'>('tasks');
   const [history, setHistory] = useState<AuditEntry[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -51,6 +53,7 @@ export function App() {
       setTitle('');
       setDescription('');
       await refresh();
+      setView('tasks');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create task');
     }
@@ -60,36 +63,56 @@ export function App() {
     event.preventDefault();
     if (!selectedTask) return;
     const form = new FormData(event.currentTarget);
-    const status = form.get('status') as TaskStatus | '';
+    const status = form.get('status') as TaskStatus;
     try {
       await taskApi.update(selectedTask.id, actor, {
         title: String(form.get('title')),
         description: String(form.get('description')),
-        ...(status ? { status } : {}),
+        ...(status !== selectedTask.status ? { status } : {}),
       });
       await refresh();
-      setSelectedTask(null);
+      closeDetail();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not update task');
     }
   }
 
-  async function showHistory(task: Task) {
+  async function showAllHistory() {
+    closeDetail();
+    setLoading(true);
     try {
-      setHistory(await taskApi.history(task.id));
-      setSelectedTask(task);
+      setHistory(await taskApi.allHistory());
+      setView('history');
       setError('');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not load history');
+    } finally {
+      setLoading(false);
     }
+  }
+
+  function openEditor(task: Task) {
+    setSelectedTask(task);
+    setHistory([]);
+    setDetailMode('edit');
+  }
+
+  function changeView(nextView: 'tasks' | 'create') {
+    closeDetail();
+    setView(nextView);
+  }
+
+  function closeDetail() {
+    setSelectedTask(null);
+    setDetailMode(null);
+    setHistory([]);
   }
 
   async function deleteTask(task: Task) {
     if (!window.confirm(`Delete “${task.title}”? This cannot be restored from the app.`)) return;
     try {
-      await taskApi.remove(task.id);
-      setSelectedTask(null);
-      setHistory([]);
+      await taskApi.remove(task.id, actor);
+      closeDetail();
       await refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not delete task');
@@ -111,15 +134,22 @@ export function App() {
         </label>
       </header>
 
-      <section className="create-panel" aria-labelledby="create-heading">
+      <nav className="view-tabs" aria-label="Task manager views">
+        <button type="button" className={view === 'tasks' ? 'tab-active' : 'quiet-button'} onClick={() => changeView('tasks')}>Active tasks</button>
+        <button type="button" className={view === 'create' ? 'tab-active' : 'quiet-button'} onClick={() => changeView('create')}>New task</button>
+        <button type="button" className={view === 'history' ? 'tab-active' : 'quiet-button'} onClick={() => void showAllHistory()}>History</button>
+      </nav>
+
+      {view === 'create' && <section className="create-panel" aria-labelledby="create-heading">
         <h2 id="create-heading">New task</h2>
         <form onSubmit={createTask} className="task-form">
           <label>Title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label>
           <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
           <button type="submit">Add task</button>
         </form>
-      </section>
+      </section>}
 
+      {view === 'tasks' && <>
       {error && <p role="alert" className="error">{error}</p>}
       {loading ? <p role="status">Loading tasks…</p> : tasks.length === 0 ? (
         <p className="empty">No active tasks yet. Add one above to begin.</p>
@@ -131,33 +161,40 @@ export function App() {
               <li key={task.id}>
                 <div><strong>{task.title}</strong><span>{task.status.replace('_', ' ')}</span><p>{task.description || 'No description'}</p></div>
                 <div className="task-actions">
-                  <button type="button" onClick={() => { setSelectedTask(task); setHistory([]); }}>Edit</button>
-                  <button type="button" onClick={() => void showHistory(task)}>History</button>
+                  <button type="button" onClick={() => openEditor(task)}>Edit</button>
                   <button type="button" className="danger" onClick={() => void deleteTask(task)}>Delete</button>
                 </div>
               </li>
             ))}
           </ul>
         </section>
-      )}
+      )}</>}
 
-      {selectedTask && (
-        <section className="detail-panel" aria-labelledby="detail-heading">
-          <h2 id="detail-heading">{selectedTask.title}</h2>
+      {view === 'history' && <section className="history-page" aria-labelledby="history-heading">
+        <h2 id="history-heading">All history</h2>
+        <p className="empty">Includes records for active and deleted tasks.</p>
+        {loading ? <p role="status">Loading history…</p> : history.length === 0 ? <p className="empty">No task updates have been recorded yet.</p> : <ol className="history-list">{history.map((entry) => <li key={entry.id}><strong>{entry.actor}</strong> changed <strong>{entry.taskTitle}</strong>: {auditMessage(entry)} <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time></li>)}</ol>}
+      </section>}
+
+      {selectedTask && detailMode && (
+        <dialog className="task-dialog" open aria-labelledby="detail-heading" onCancel={(event) => { event.preventDefault(); closeDetail(); }}>
+          <div className="dialog-heading">
+            <div><p className="eyebrow">Edit task</p><h2 id="detail-heading">{selectedTask.title}</h2></div>
+            <button type="button" className="quiet-button" onClick={closeDetail}>Close</button>
+          </div>
           <form onSubmit={saveTask} className="task-form">
             <label>Title<input name="title" defaultValue={selectedTask.title} required /></label>
             <label>Description<textarea name="description" defaultValue={selectedTask.description ?? ''} /></label>
             <label>Status
-              <select name="status" defaultValue="">
-                <option value="">Keep {selectedTask.status.replace('_', ' ')}</option>
-                {nextStatus[selectedTask.status] && <option value={nextStatus[selectedTask.status]!}>Move to {nextStatus[selectedTask.status]!.replace('_', ' ')}</option>}
+              <select name="status" defaultValue={selectedTask.status}>
+                {TASK_STATUSES.map((status) => <option key={status} value={status} disabled={status !== selectedTask.status && status !== nextStatus[selectedTask.status]}>
+                  {status.replace('_', ' ')}{status === selectedTask.status ? ' (current)' : status === nextStatus[selectedTask.status] ? ' (next)' : ' (locked)'}
+                </option>)}
               </select>
             </label>
-            <div className="task-actions"><button type="submit">Save changes</button><button type="button" onClick={() => setSelectedTask(null)}>Close</button></div>
+            <div className="task-actions"><button type="submit">Save changes</button><button type="button" className="quiet-button" onClick={closeDetail}>Cancel</button></div>
           </form>
-          <h3>History</h3>
-          {history.length === 0 ? <p className="empty">No recorded updates yet.</p> : <ol className="history-list">{history.map((entry) => <li key={entry.id}><strong>{entry.actor}</strong> {auditMessage(entry)} <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time></li>)}</ol>}
-        </section>
+        </dialog>
       )}
     </main>
   );
