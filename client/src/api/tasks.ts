@@ -21,6 +21,7 @@ export const taskApi = {
     request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify(input) }),
   update: (id: string, actor: Actor, input: TaskUpdate) =>
     request<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ actor, ...input }) }),
-  remove: (id: string) => request<void>(`/api/tasks/${id}`, { method: 'DELETE' }),
+  remove: (id: string, actor: Actor) => request<void>(`/api/tasks/${id}`, { method: 'DELETE', body: JSON.stringify({ actor }) }),
   history: (id: string) => request<AuditEntry[]>(`/api/tasks/${id}/history`),
+  allHistory: () => request<AuditEntry[]>('/api/history'),
 };

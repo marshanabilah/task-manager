@@ -150,15 +150,29 @@ export function createTaskService(databasePath = 'task-manager.sqlite') {
         .all() as TaskRow[]).map(asTask);
     },
     update,
-    remove(id: string): void {
-      getTask(id);
-      database.prepare('UPDATE tasks SET deleted_at = ? WHERE id = ?').run(new Date().toISOString(), id);
-    },
+    remove: database.transaction((id: string, actor: Actor): void => {
+      const task = getTask(id);
+      if (task.deletedAt) {
+        throw new Error('Task not found');
+      }
+      const now = new Date().toISOString();
+      database.prepare('UPDATE tasks SET deleted_at = ? WHERE id = ?').run(now, id);
+      database
+        .prepare(
+          'INSERT INTO audit_entries (id, task_id, task_title, actor, changes, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .run(randomUUID(), id, task.title, actor, JSON.stringify([{ field: 'deleted', before: null, after: 'deleted' }]), now);
+    }),
     history(id: string): AuditEntry[] {
       getTask(id);
       return (database
         .prepare('SELECT * FROM audit_entries WHERE task_id = ? ORDER BY created_at ASC, rowid ASC')
         .all(id) as AuditRow[]).map(asAuditEntry);
+    },
+    allHistory(): AuditEntry[] {
+      return (database
+        .prepare('SELECT * FROM audit_entries ORDER BY created_at ASC, rowid ASC')
+        .all() as AuditRow[]).map(asAuditEntry);
     },
   };
 }

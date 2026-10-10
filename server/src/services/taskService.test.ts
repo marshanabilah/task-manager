@@ -30,7 +30,7 @@ describe('task service', () => {
     const task = service.create({ title: 'Prepare Invoice' });
 
     service.update(task.id, 'jane.smith', { status: 'pending' });
-    service.remove(task.id);
+    service.remove(task.id, 'jane.smith');
 
     expect(service.list()).toEqual([]);
     expect(service.history(task.id)).toHaveLength(1);

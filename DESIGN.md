@@ -2,7 +2,7 @@
 
 The task manager is a quiet operational tool for a small team, not a marketing page.
 
-- Energy/Rhythm/Motion: 1 / 1 / 1, calm, predictable, and static.
+- Energy/Rhythm/Motion: 1 / 1 / 1, calm and predictable; the edit/history dialog uses one short transition only to signal a change of context.
 - Typography: a system sans-serif keeps dense task and audit information easy to scan.
 - Palette: black, white, and neutral grays keep attention on task content; muted red is reserved for errors and deletion.
 - Layout: a single column preserves a clear reading order from actor selection to tasks and history.

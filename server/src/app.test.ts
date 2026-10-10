@@ -38,4 +38,17 @@ describe('task API', () => {
       .send({ status: 'pending' })
       .expect(400);
   });
+
+  it('lists audit history after its task is deleted', async () => {
+    const created = await request(app).post('/api/tasks').send({ title: 'Prepare Invoice' }).expect(201);
+    const taskId = created.body.id as string;
+
+    await request(app).delete(`/api/tasks/${taskId}`).send({ actor: 'alex.lee' }).expect(204);
+
+    await request(app).get('/api/history').expect(200).expect(({ body }) => {
+      expect(body).toHaveLength(1);
+      expect(body[0]).toMatchObject({ taskTitle: 'Prepare Invoice', actor: 'alex.lee' });
+      expect(body[0].changes).toEqual([{ field: 'deleted', before: null, after: 'deleted' }]);
+    });
+  });
 });
