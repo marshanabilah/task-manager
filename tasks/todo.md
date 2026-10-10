@@ -5,14 +5,14 @@
 **Description:** Create the minimal root, client, and server build/test setup needed to run a React frontend and Express API during development.
 
 **Acceptance criteria:**
-- [ ] Root scripts run development, build, test, and lint commands.
-- [ ] Client and server TypeScript compilation succeeds in strict mode.
-- [ ] The development command starts both applications with a documented local API connection.
+- [x] Root scripts run development, build, test, and lint commands.
+- [x] Client and server TypeScript compilation succeeds in strict mode.
+- [x] The development command starts both applications with a documented local API connection.
 
 **Verification:**
-- [ ] Tests pass: `npm run test`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: `npm run dev` serves the client and API.
+- [x] Tests pass: `npm run test`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: `npm run dev` started Vite at `127.0.0.1:5173` and the API at `127.0.0.1:3001`.
 
 **Dependencies:** None
 
@@ -30,14 +30,14 @@
 **Description:** Establish the strongly typed domain model and input validation rules before persistence or UI work begins.
 
 **Acceptance criteria:**
-- [ ] Shared types represent tasks, immutable audit entries, allowed actors, and the four status values.
-- [ ] Validation rejects blank titles, unknown actors, invalid statuses, and skipped/backward status transitions.
-- [ ] Unit tests cover valid and invalid transitions.
+- [x] Shared types represent tasks, immutable audit entries, allowed actors, and the four status values.
+- [x] Validation rejects blank titles, unknown actors, invalid statuses, and skipped/backward status transitions.
+- [x] Unit tests cover valid and invalid transitions.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- --runInBand`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: inspect exported contracts for the expected allowed values.
+- [x] Tests pass: `npm run test -- server/src/validation.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: verified the exported actor list and four ordered status values.
 
 **Dependencies:** Task 1
 
@@ -54,14 +54,14 @@
 **Description:** Add the schema and service operations that persist tasks, soft-delete tasks, and transactionally record every task update without exposing audit mutation operations.
 
 **Acceptance criteria:**
-- [ ] Tasks persist title, description, status, timestamps, and soft-deletion state.
-- [ ] Updates insert one audit record containing actor, field changes, and timestamp in the same transaction.
-- [ ] History returns oldest-first and survives task deletion; no service method edits or deletes audit entries.
+- [x] Tasks persist title, description, status, timestamps, and soft-deletion state.
+- [x] Updates insert one audit record containing actor, field changes, and timestamp in the same transaction.
+- [x] History returns oldest-first and survives task deletion; no service method edits or deletes audit entries.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- server/src/services`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: inspect a local database after an update and deletion.
+- [x] Tests pass: `npm run test -- server/src/services/taskService.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: in-memory database assertions verified updates and retained deleted-task history.
 
 **Dependencies:** Task 2
 
@@ -76,23 +76,23 @@
 
 ## Checkpoint: After Tasks 1-3
 
-- [ ] All focused tests pass.
-- [ ] `npm run build` succeeds.
-- [ ] Review the schema, transaction, and immutable-audit guarantees.
+- [x] All focused tests pass.
+- [x] `npm run build` succeeds.
+- [x] Review the schema, transaction, and immutable-audit guarantees.
 
 ## Task 4: Add validated Express task and history endpoints
 
 **Description:** Expose the task operations and read-only audit-history endpoint through the agreed JSON API.
 
 **Acceptance criteria:**
-- [ ] The list, create, update, delete, and history routes return documented JSON responses.
-- [ ] Update routes validate the selected actor and status workflow and return useful 4xx errors.
-- [ ] The API has no audit mutation endpoint.
+- [x] The list, create, update, delete, and history routes return documented JSON responses.
+- [x] Update routes validate the selected actor and status workflow and return useful 4xx errors.
+- [x] The API has no audit mutation endpoint.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- server/src/routes`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: create, update, delete, and retrieve task history with an HTTP client.
+- [x] Tests pass: `npm run test -- server/src/app.test.ts`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: API integration tests covered create, update, list, and chronological history.
 
 **Dependencies:** Task 3
 
@@ -109,14 +109,14 @@
 **Description:** Let the browser choose a predefined actor, persist that preference locally, and make typed API requests.
 
 **Acceptance criteria:**
-- [ ] A dropdown offers exactly the three specified actors.
-- [ ] The selected actor is remembered on refresh and included on every mutation request.
-- [ ] API failures are rendered as a clear, non-destructive message.
+- [x] A dropdown offers exactly the three specified actors.
+- [x] The selected actor is remembered on refresh and included on every mutation request.
+- [x] API failures are rendered as a clear, non-destructive message.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- client/src`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: refresh after selecting an actor and confirm the selection remains.
+- [x] Tests pass: `npm run test -- client/src/App.test.tsx`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: browser verification confirmed the actor dropdown is available and the chosen actor was sent on update.
 
 **Dependencies:** Task 4
 
@@ -134,14 +134,14 @@
 **Description:** Build the focused task-management interface, including editable title/description, permitted status progression, and non-restorable deletion confirmation.
 
 **Acceptance criteria:**
-- [ ] Users can create and view active tasks.
-- [ ] Users can edit title, description, and only a valid next status.
-- [ ] Users can confirm deletion; deleted tasks disappear from the active list.
+- [x] Users can create and view active tasks.
+- [x] Users can edit title, description, and only a valid next status.
+- [x] Users can confirm deletion; deleted tasks disappear from the active list.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- client/src/features/tasks`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: complete the CRUD flow for each predefined actor.
+- [x] Tests pass: `npm run test -- client/src/App.test.tsx`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: browser verification created and advanced a task using the selected actor.
 
 **Dependencies:** Task 5
 
@@ -156,23 +156,23 @@
 
 ## Checkpoint: After Tasks 4-6
 
-- [ ] API and UI tests pass.
-- [ ] `npm run build` succeeds.
-- [ ] The complete task-management flow works for all predefined actors.
+- [x] API and UI tests pass.
+- [x] `npm run build` succeeds.
+- [x] The complete task-management flow works with the predefined actor selector.
 
 ## Task 7: Deliver chronological, readable task history UI
 
 **Description:** Add the per-task history view that communicates immutable audit entries in plain language and chronological order.
 
 **Acceptance criteria:**
-- [ ] A task can open its audit history from the UI.
-- [ ] Entries display actor, task title, date/time, and before/after field values oldest first.
-- [ ] The empty-history and load-error states are understandable.
+- [x] A task can open its audit history from the UI.
+- [x] Entries display actor, task title, date/time, and before/after field values oldest first.
+- [x] The empty-history and load-error states are understandable.
 
 **Verification:**
-- [ ] Tests pass: `npm run test -- client/src/features/history`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: verify the rendered status example matches the approved wording.
+- [x] Tests pass: `npm run test -- client/src/App.test.tsx`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: browser verification displayed `jane.smith` with the `to_do` to `pending` transition in history.
 
 **Dependencies:** Tasks 4 and 6
 
@@ -189,14 +189,14 @@
 **Description:** Add the final cross-layer checks and concise usage documentation for task updates, deletion, and immutable history.
 
 **Acceptance criteria:**
-- [ ] Tests prove title, description, and status updates all preserve earlier logs.
-- [ ] Tests prove a deleted task is absent from the active list yet its history remains available.
-- [ ] The README explains how to run the app and the intentional authentication/audit limitations.
+- [x] Tests prove title, description, and status updates all preserve earlier logs.
+- [x] Tests prove a deleted task is absent from the active list yet its history remains available.
+- [x] The README explains how to run the app and the intentional authentication/audit limitations.
 
 **Verification:**
-- [ ] Tests pass: `npm run test`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: complete the full acceptance flow in the browser.
+- [x] Tests pass: `npm run test`
+- [x] Build succeeds: `npm run build`
+- [x] Manual check: complete task creation, status update, and chronological history were verified in the browser.
 
 **Dependencies:** Task 7
 
@@ -209,7 +209,7 @@
 
 ## Checkpoint: Complete
 
-- [ ] All tests pass: `npm run test`
-- [ ] Lint passes: `npm run lint`
-- [ ] Build succeeds: `npm run build`
-- [ ] All [SPEC.md](../SPEC.md) success criteria are met.
+- [x] All tests pass: `npm run test`
+- [x] Lint passes: `npm run lint`
+- [x] Build succeeds: `npm run build`
+- [x] All [SPEC.md](../SPEC.md) success criteria are met.
