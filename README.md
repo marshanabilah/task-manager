@@ -22,7 +22,7 @@ Browser
           | HTTP /api
           v
 Node.js + Express + TypeScript
-  - validates tasks, actors, and status progression
+  - validates tasks, actors, and status values
   - creates immutable audit entries with each mutation
           |
           v
@@ -45,7 +45,7 @@ npm run build
 
 - Choose one of the fixed users: `john.doe`, `jane.smith`, or `alex.lee`.
 - Create, edit, list, and delete tasks.
-- Move status forward only: `to_do` to `pending` to `in_progress` to `done`.
+- Set status to `to_do`, `pending`, `in_progress`, or `done` at any time.
 - Every task update records the selected user, changed values, and timestamp. Audit entries are read-only and stay available after deletion.
 
 This version intentionally has no real authentication, accounts, or restoration of deleted tasks.

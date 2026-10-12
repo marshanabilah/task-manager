@@ -7,13 +7,6 @@ type TaskUpdateInput = {
   title?: unknown;
 };
 
-const nextStatuses: Record<TaskStatus, TaskStatus | null> = {
-  to_do: 'pending',
-  pending: 'in_progress',
-  in_progress: 'done',
-  done: null,
-};
-
 export function validateActor(value: unknown): Actor {
   if (typeof value !== 'string' || !ACTORS.includes(value as Actor)) {
     throw new Error('Actor must be one of the predefined users');
@@ -22,7 +15,7 @@ export function validateActor(value: unknown): Actor {
   return value as Actor;
 }
 
-export function validateTaskUpdate(input: TaskUpdateInput, currentStatus: TaskStatus): TaskUpdate {
+export function validateTaskUpdate(input: TaskUpdateInput): TaskUpdate {
   const update: TaskUpdate = {};
 
   if (input.actor !== undefined) {
@@ -48,10 +41,6 @@ export function validateTaskUpdate(input: TaskUpdateInput, currentStatus: TaskSt
   if (input.status !== undefined) {
     if (typeof input.status !== 'string' || !TASK_STATUSES.includes(input.status as TaskStatus)) {
       throw new Error('Status is invalid');
-    }
-
-    if (nextStatuses[currentStatus] !== input.status) {
-      throw new Error('Status must move to the next workflow stage');
     }
 
     update.status = input.status as TaskStatus;

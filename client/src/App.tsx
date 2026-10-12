@@ -5,13 +5,6 @@ import { taskApi } from './api/tasks';
 import { useSelectedActor } from './hooks/useSelectedActor';
 import './styles.css';
 
-const nextStatus: Record<TaskStatus, TaskStatus | null> = {
-  to_do: 'pending',
-  pending: 'in_progress',
-  in_progress: 'done',
-  done: null,
-};
-
 function auditMessage(entry: AuditEntry) {
   return entry.changes
     .map((change) => {
@@ -47,10 +40,12 @@ export function App() {
   const [actor, setActor] = useSelectedActor();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [detailMode, setDetailMode] = useState<'edit' | null>(null);
+  const [detailMode, setDetailMode] = useState<'edit' | 'history' | null>(null);
   const [view, setView] = useState<'tasks' | 'history'>('tasks');
   const [showCreate, setShowCreate] = useState(false);
   const [history, setHistory] = useState<AuditEntry[]>([]);
+  const [taskHistory, setTaskHistory] = useState<AuditEntry[]>([]);
+  const [taskHistoryLoading, setTaskHistoryLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
@@ -121,8 +116,22 @@ export function App() {
 
   function openEditor(task: Task) {
     setSelectedTask(task);
-    setHistory([]);
     setDetailMode('edit');
+  }
+
+  async function openTaskHistory(task: Task) {
+    setSelectedTask(task);
+    setTaskHistory([]);
+    setTaskHistoryLoading(true);
+    setDetailMode('history');
+    try {
+      setTaskHistory(await taskApi.history(task.id));
+      setError('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not load task history');
+    } finally {
+      setTaskHistoryLoading(false);
+    }
   }
 
   function changeView(nextView: 'tasks') {
@@ -135,6 +144,7 @@ export function App() {
     setSelectedTask(null);
     setDetailMode(null);
     setHistory([]);
+    setTaskHistory([]);
   }
 
   async function deleteTask(task: Task) {
@@ -186,6 +196,7 @@ export function App() {
                 <div><strong>{task.title}</strong><span>{task.status.replace('_', ' ')}</span><p>{task.description || 'No description'}</p></div>
                 <div className="task-actions">
                   <button type="button" onClick={() => openEditor(task)}>Edit</button>
+                  <button type="button" className="quiet-button" onClick={() => void openTaskHistory(task)}>History</button>
                   <button type="button" className="danger" onClick={() => void deleteTask(task)}>Delete</button>
                 </div>
               </li>
@@ -215,7 +226,17 @@ export function App() {
         </Modal>
       )}
 
-      {selectedTask && detailMode && (
+      {selectedTask && detailMode === 'history' && (
+        <Modal labelledBy="task-history-heading" onClose={closeDetail}>
+          <div className="dialog-heading">
+            <h2 id="task-history-heading">{selectedTask.title}</h2>
+            <button type="button" className="quiet-button" onClick={closeDetail}>Cancel</button>
+          </div>
+          {taskHistoryLoading ? <p role="status">Loading history…</p> : taskHistory.length === 0 ? <p className="empty">No history yet.</p> : <ol className="history-list">{taskHistory.map((entry) => <li key={entry.id}><strong>{entry.actor}</strong>: {auditMessage(entry)} <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time></li>)}</ol>}
+        </Modal>
+      )}
+
+      {selectedTask && detailMode === 'edit' && (
         <Modal labelledBy="detail-heading" onClose={closeDetail}>
           <div className="dialog-heading">
             <div><p className="eyebrow">Edit task</p><h2 id="detail-heading">{selectedTask.title}</h2></div>
@@ -226,9 +247,7 @@ export function App() {
             <label>Description<textarea name="description" defaultValue={selectedTask.description ?? ''} /></label>
             <label>Status
               <select name="status" defaultValue={selectedTask.status}>
-                {TASK_STATUSES.map((status) => <option key={status} value={status} disabled={status !== selectedTask.status && status !== nextStatus[selectedTask.status]}>
-                  {status.replace('_', ' ')}{status === selectedTask.status ? ' (current)' : status === nextStatus[selectedTask.status] ? ' (next)' : ' (locked)'}
-                </option>)}
+                {TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}
               </select>
             </label>
             <div className="task-actions"><button type="submit">Save changes</button><button type="button" className="quiet-button" onClick={closeDetail}>Cancel</button></div>

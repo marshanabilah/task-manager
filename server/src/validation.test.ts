@@ -2,32 +2,32 @@ import { describe, expect, it } from 'vitest';
 import { validateTaskUpdate } from './validation';
 
 describe('validateTaskUpdate', () => {
-  it('accepts the next status in the workflow', () => {
-    expect(validateTaskUpdate({ status: 'pending' }, 'to_do')).toEqual({
+  it('accepts any defined status', () => {
+    expect(validateTaskUpdate({ status: 'pending' })).toEqual({
       status: 'pending',
     });
-  });
-
-  it('rejects skipped status transitions', () => {
-    expect(() => validateTaskUpdate({ status: 'done' }, 'to_do')).toThrow(
-      'Status must move to the next workflow stage',
-    );
+    expect(validateTaskUpdate({ status: 'done' })).toEqual({
+      status: 'done',
+    });
+    expect(validateTaskUpdate({ status: 'to_do' })).toEqual({
+      status: 'to_do',
+    });
   });
 
   it('rejects an unknown actor', () => {
     expect(() =>
-      validateTaskUpdate({ title: 'Prepare invoice', actor: 'unknown.user' }, 'to_do'),
+      validateTaskUpdate({ title: 'Prepare invoice', actor: 'unknown.user' }),
     ).toThrow('Actor must be one of the predefined users');
   });
 
   it('trims a title before returning it', () => {
-    expect(validateTaskUpdate({ title: '  Prepare invoice  ' }, 'to_do')).toEqual({
+    expect(validateTaskUpdate({ title: '  Prepare invoice  ' })).toEqual({
       title: 'Prepare invoice',
     });
   });
 
   it('rejects a blank title', () => {
-    expect(() => validateTaskUpdate({ title: '   ' }, 'to_do')).toThrow(
+    expect(() => validateTaskUpdate({ title: '   ' })).toThrow(
       'Title is required',
     );
   });
