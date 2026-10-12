@@ -11,6 +11,28 @@ npm run dev
 
 Open `http://127.0.0.1:5173` (or the next port Vite reports). The API runs on port `3001`.
 
+## Architecture
+
+```text
+Browser
+  React + TypeScript
+  - active tasks, history, and task modals
+  - selected fixed actor
+          |
+          | HTTP /api
+          v
+Node.js + Express + TypeScript
+  - validates tasks, actors, and status progression
+  - creates immutable audit entries with each mutation
+          |
+          v
+SQLite
+  - tasks (soft-deleted when removed)
+  - audit_entries (append-only)
+```
+
+`shared/` contains the task, status, actor, and audit TypeScript contracts used by both the client and server. Creating, updating, or deleting a task is handled in one database transaction with its audit entry, so the task state and history remain consistent.
+
 ## Verification
 
 ```sh
