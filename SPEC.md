@@ -57,7 +57,7 @@ tests/                  API and UI-focused tests
 
 - A task has an id, title, optional description, status, created timestamp, updated timestamp, and deleted timestamp when applicable.
 - Valid statuses are `to_do`, `pending`, `in_progress`, and `done`.
-- Status changes follow the forward workflow `to_do` → `pending` → `in_progress` → `done`.
+- A task may move between any of the four statuses: `to_do`, `pending`, `in_progress`, and `done`.
 - A title is required, trimmed, and must not be empty.
 - The active-task list excludes deleted tasks and displays each task's title, description when present, and latest update time.
 - Users can create tasks and update their title, description, or status through clear controls with inline validation.
@@ -72,7 +72,7 @@ tests/                  API and UI-focused tests
 - For title or description changes, the record uses the same readable before/after format. For example: `User "jane.smith" changed Task title from "Prepare Invoice" to "Send Invoice" at 2025-01-01 10:00`.
 - The server creates the audit record in the same database operation as the task mutation. A creation, update, or deletion must not succeed without its audit record.
 - Audit records cannot be edited or deleted through the API or UI. Updating or deleting a task must never remove its earlier audit records.
-- A dedicated history view presents records newest first with a plain-language summary and local date/time, including records for deleted tasks. For example: `User "john.doe" changed Task "Prepare Invoice" status from "pending" to "in_progress" at 2025-01-01 10:00`.
+- A dedicated history view presents records newest first with a plain-language summary and local date/time, including records for deleted tasks. An active task also exposes its own audit history in a modal. For example: `User "john.doe" changed Task "Prepare Invoice" status from "pending" to "in_progress" at 2025-01-01 10:00`.
 - A deleted task's history remains retrievable by its id even though it is absent from the active list.
 
 ### API
@@ -122,7 +122,8 @@ function describeStatusChange(
 - Every task update records the selected predefined actor, task title, timestamp, each changed field, and its prior/new value.
 - History appears chronologically in the UI with the specified plain-language explanation; status entries include their prior and new statuses.
 - The task history remains readable after its task is deleted.
-- The API rejects empty titles, invalid statuses, and status transitions that do not follow the defined workflow.
+- An active task can display only its own audit entries in a modal.
+- The API rejects empty titles and invalid statuses.
 - The API offers no endpoint that can modify or delete an audit record.
 - The project builds, lints, and passes its task/audit test suite.
 
@@ -135,5 +136,5 @@ None. The initial scope is fully defined.
 - The v1 actor is selected from `john.doe`, `jane.smith`, and `alex.lee`; real authentication is out of scope.
 - SQLite is the v1 database.
 - Title, description, and status are editable.
-- Status flow is `to_do` → `pending` → `in_progress` → `done`.
+- Statuses are `to_do`, `pending`, `in_progress`, and `done`; tasks can move between them without a fixed sequence.
 - Deletion is not restorable from the UI; its audit history remains available.

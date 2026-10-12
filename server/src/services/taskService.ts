@@ -119,7 +119,7 @@ export function createTaskService(databasePath = 'task-manager.sqlite') {
       throw new Error('Task not found');
     }
 
-    const change = validateTaskUpdate(input, before.status);
+    const change = validateTaskUpdate(input);
     const after = { ...before, ...change };
     const changes = (Object.keys(change) as Array<keyof TaskUpdate>)
       .filter((field) => before[field] !== after[field])

@@ -31,8 +31,8 @@
 
 **Acceptance criteria:**
 - [x] Shared types represent tasks, immutable audit entries, allowed actors, and the four status values.
-- [x] Validation rejects blank titles, unknown actors, invalid statuses, and skipped/backward status transitions.
-- [x] Unit tests cover valid and invalid transitions.
+- [x] Validation rejects blank titles, unknown actors, and invalid statuses.
+- [x] Unit tests cover valid and invalid status values.
 
 **Verification:**
 - [x] Tests pass: `npm run test -- server/src/validation.test.ts`
@@ -131,7 +131,7 @@
 
 ## Task 6: Deliver create, list, edit, and delete task UI
 
-**Description:** Build the focused task-management interface, including editable title/description, permitted status progression, and non-restorable deletion confirmation.
+**Description:** Build the focused task-management interface, including editable title/description/status, and non-restorable deletion confirmation.
 
 **Acceptance criteria:**
 - [x] Users can create and view active tasks.

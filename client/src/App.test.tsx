@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
@@ -45,6 +45,46 @@ describe('App', () => {
 
     expect(screen.getByRole('dialog')).toHaveAttribute('open');
     expect(screen.getByText('Edit task')).toBeInTheDocument();
+  });
+
+  it('opens a task-specific audit history in a modal', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [{
+          id: 'task-1',
+          title: 'Prepare Invoice',
+          description: null,
+          status: 'pending',
+          createdAt: '2026-10-10T00:00:00.000Z',
+          updatedAt: '2026-10-10T00:01:00.000Z',
+          deletedAt: null,
+        }],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [{
+          id: 'audit-1',
+          taskId: 'task-1',
+          taskTitle: 'Prepare Invoice',
+          actor: 'john.doe',
+          changes: [{ field: 'status', before: 'to_do', after: 'pending' }],
+          createdAt: '2026-10-10T00:01:00.000Z',
+        }],
+      });
+
+    render(<App />);
+
+    const taskRow = (await screen.findByText('Prepare Invoice')).closest('li');
+    expect(taskRow).not.toBeNull();
+    fireEvent.click(within(taskRow!).getByRole('button', { name: 'History' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('open');
+    expect(within(dialog).getByText('Prepare Invoice')).toBeInTheDocument();
+    expect(within(dialog).getByText(/status changed from/)).toBeInTheDocument();
   });
 
   it('shows the new-task form from the active task view', async () => {
